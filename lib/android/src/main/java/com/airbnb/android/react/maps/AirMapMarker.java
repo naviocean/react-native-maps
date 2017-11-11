@@ -8,6 +8,9 @@ import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.animation.ObjectAnimator;
+import android.util.Property;
+import android.animation.TypeEvaluator;
 
 import com.facebook.common.references.CloseableReference;
 import com.facebook.datasource.DataSource;
@@ -74,36 +77,36 @@ public class AirMapMarker extends AirMapFeature {
   private final DraweeHolder<?> logoHolder;
   private DataSource<CloseableReference<CloseableImage>> dataSource;
   private final ControllerListener<ImageInfo> mLogoControllerListener =
-      new BaseControllerListener<ImageInfo>() {
-        @Override
-        public void onFinalImageSet(
-            String id,
-            @Nullable final ImageInfo imageInfo,
-            @Nullable Animatable animatable) {
-          CloseableReference<CloseableImage> imageReference = null;
-          try {
-            imageReference = dataSource.getResult();
-            if (imageReference != null) {
-              CloseableImage image = imageReference.get();
-              if (image != null && image instanceof CloseableStaticBitmap) {
-                CloseableStaticBitmap closeableStaticBitmap = (CloseableStaticBitmap) image;
-                Bitmap bitmap = closeableStaticBitmap.getUnderlyingBitmap();
-                if (bitmap != null) {
-                  bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                  iconBitmap = bitmap;
-                  iconBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
-                }
-              }
-            }
-          } finally {
-            dataSource.close();
-            if (imageReference != null) {
-              CloseableReference.closeSafely(imageReference);
+   new BaseControllerListener<ImageInfo>() {
+    @Override
+    public void onFinalImageSet(
+      String id,
+      @Nullable final ImageInfo imageInfo,
+      @Nullable Animatable animatable) {
+      CloseableReference<CloseableImage> imageReference = null;
+      try {
+        imageReference = dataSource.getResult();
+        if (imageReference != null) {
+          CloseableImage image = imageReference.get();
+          if (image != null && image instanceof CloseableStaticBitmap) {
+            CloseableStaticBitmap closeableStaticBitmap = (CloseableStaticBitmap) image;
+            Bitmap bitmap = closeableStaticBitmap.getUnderlyingBitmap();
+            if (bitmap != null) {
+              bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+              iconBitmap = bitmap;
+              iconBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
             }
           }
-          update();
         }
-      };
+      } finally {
+        dataSource.close();
+        if (imageReference != null) {
+          CloseableReference.closeSafely(imageReference);
+        }
+      }
+      update();
+    }
+  };
 
   public AirMapMarker(Context context) {
     super(context);
@@ -114,9 +117,9 @@ public class AirMapMarker extends AirMapFeature {
 
   private GenericDraweeHierarchy createDraweeHierarchy() {
     return new GenericDraweeHierarchyBuilder(getResources())
-        .setActualImageScaleType(ScalingUtils.ScaleType.FIT_CENTER)
-        .setFadeDuration(0)
-        .build();
+    .setActualImageScaleType(ScalingUtils.ScaleType.FIT_CENTER)
+    .setFadeDuration(0)
+    .build();
   }
 
   public void setCoordinate(ReadableMap coordinate) {
@@ -158,6 +161,29 @@ public class AirMapMarker extends AirMapFeature {
       marker.setRotation(rotation);
     }
     update();
+  }
+
+  public LatLng interpolate(float fraction, LatLng a, LatLng b) {
+    double lat = (b.latitude - a.latitude) * fraction + a.latitude;
+    double lng = (b.longitude - a.longitude) * fraction + a.longitude;
+    return new LatLng(lat, lng);
+  }
+
+  public void animateToCoodinate(LatLng finalPosition, Integer duration) {
+    TypeEvaluator<LatLng> typeEvaluator = new TypeEvaluator<LatLng>() {
+      @Override
+      public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+        return interpolate(fraction, startValue, endValue);
+      }
+    };
+    Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
+    ObjectAnimator animator = ObjectAnimator.ofObject(
+      marker,
+      property,
+      typeEvaluator,
+      finalPosition);
+    animator.setDuration(duration);
+    animator.start();
   }
 
   public void setFlat(boolean flat) {
@@ -222,7 +248,7 @@ public class AirMapMarker extends AirMapFeature {
       iconBitmapDescriptor = null;
       update();
     } else if (uri.startsWith("http://") || uri.startsWith("https://") ||
-        uri.startsWith("file://")) {
+     uri.startsWith("file://")) {
       ImageRequest imageRequest = ImageRequestBuilder
           .newBuilderWithSource(Uri.parse(uri))
           .build();
@@ -230,7 +256,7 @@ public class AirMapMarker extends AirMapFeature {
       ImagePipeline imagePipeline = Fresco.getImagePipeline();
       dataSource = imagePipeline.fetchDecodedImage(imageRequest, this);
       DraweeController controller = Fresco.newDraweeControllerBuilder()
-          .setImageRequest(imageRequest)
+      .setImageRequest(imageRequest)
           .setControllerListener(mLogoControllerListener)
           .setOldController(logoHolder.getController())
           .build();
@@ -238,7 +264,7 @@ public class AirMapMarker extends AirMapFeature {
     } else {
       iconBitmapDescriptor = getBitmapDescriptorByName(uri);
       if (iconBitmapDescriptor != null) {
-          iconBitmap = BitmapFactory.decodeResource(getResources(), getDrawableResourceByName(uri));
+        iconBitmap = BitmapFactory.decodeResource(getResources(), getDrawableResourceByName(uri));
       }
       update();
     }
@@ -400,8 +426,8 @@ public class AirMapMarker extends AirMapFeature {
     LinearLayout LL = new LinearLayout(context);
     LL.setOrientation(LinearLayout.VERTICAL);
     LL.setLayoutParams(new LinearLayout.LayoutParams(
-        this.calloutView.width,
-        this.calloutView.height,
+      this.calloutView.width,
+       this.calloutView.height,
         0f
     ));
 
@@ -409,8 +435,8 @@ public class AirMapMarker extends AirMapFeature {
     LinearLayout LL2 = new LinearLayout(context);
     LL2.setOrientation(LinearLayout.HORIZONTAL);
     LL2.setLayoutParams(new LinearLayout.LayoutParams(
-        this.calloutView.width,
-        this.calloutView.height,
+      this.calloutView.width,
+       this.calloutView.height,
         0f
     ));
 
@@ -422,9 +448,9 @@ public class AirMapMarker extends AirMapFeature {
 
   private int getDrawableResourceByName(String name) {
     return getResources().getIdentifier(
-        name,
-        "drawable",
-        getContext().getPackageName());
+      name,
+      "drawable",
+      getContext().getPackageName());
   }
 
   private BitmapDescriptor getBitmapDescriptorByName(String name) {

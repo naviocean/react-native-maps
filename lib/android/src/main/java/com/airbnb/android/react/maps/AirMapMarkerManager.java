@@ -11,6 +11,7 @@ import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,7 @@ public class AirMapMarkerManager extends ViewGroupManager<AirMapMarker> {
 
   private static final int SHOW_INFO_WINDOW = 1;
   private static final int HIDE_INFO_WINDOW = 2;
+  private static final int ANIMATE_MARKER_TO_COORDINATE = 3;
 
   public AirMapMarkerManager() {
   }
@@ -59,15 +61,15 @@ public class AirMapMarkerManager extends ViewGroupManager<AirMapMarker> {
   // android uses normalized coordinate systems for this, and is provided through the
   // `anchor` property  and `calloutAnchor` instead.  Perhaps some work could be done
   // to normalize iOS and android to use just one of the systems.
-//    @ReactProp(name = "centerOffset")
-//    public void setCenterOffset(AirMapMarker view, ReadableMap map) {
-//
-//    }
-//
-//    @ReactProp(name = "calloutOffset")
-//    public void setCalloutOffset(AirMapMarker view, ReadableMap map) {
-//
-//    }
+  //    @ReactProp(name = "centerOffset")
+  //    public void setCenterOffset(AirMapMarker view, ReadableMap map) {
+  //
+  //    }
+  //
+  //    @ReactProp(name = "calloutOffset")
+  //    public void setCalloutOffset(AirMapMarker view, ReadableMap map) {
+  //
+  //    }
 
   @ReactProp(name = "anchor")
   public void setAnchor(AirMapMarker view, ReadableMap map) {
@@ -89,9 +91,9 @@ public class AirMapMarkerManager extends ViewGroupManager<AirMapMarker> {
   public void setImage(AirMapMarker view, @Nullable String source) {
     view.setImage(source);
   }
-//    public void setImage(AirMapMarker view, ReadableMap image) {
-//        view.setImage(image);
-//    }
+  //    public void setImage(AirMapMarker view, ReadableMap image) {
+  //        view.setImage(image);
+  //    }
 
   @ReactProp(name = "pinColor", defaultInt = Color.RED, customType = "Color")
   public void setPinColor(AirMapMarker view, int pinColor) {
@@ -153,21 +155,34 @@ public class AirMapMarkerManager extends ViewGroupManager<AirMapMarker> {
   @Nullable
   public Map<String, Integer> getCommandsMap() {
     return MapBuilder.of(
-        "showCallout", SHOW_INFO_WINDOW,
-        "hideCallout", HIDE_INFO_WINDOW
-    );
+      "showCallout", SHOW_INFO_WINDOW,
+      "hideCallout", HIDE_INFO_WINDOW,
+      "animateMarkerToCoordinate",  ANIMATE_MARKER_TO_COORDINATE);
   }
 
   @Override
   public void receiveCommand(AirMapMarker view, int commandId, @Nullable ReadableArray args) {
-    switch (commandId) {
-      case SHOW_INFO_WINDOW:
-        ((Marker) view.getFeature()).showInfoWindow();
-        break;
+    Integer duration;
+    Double lat;
+    Double lng;
+    ReadableMap region;
 
-      case HIDE_INFO_WINDOW:
-        ((Marker) view.getFeature()).hideInfoWindow();
-        break;
+    switch (commandId) {
+    case SHOW_INFO_WINDOW:
+      ((Marker) view.getFeature()).showInfoWindow();
+      break;
+
+    case HIDE_INFO_WINDOW:
+      ((Marker) view.getFeature()).hideInfoWindow();
+      break;
+    case ANIMATE_MARKER_TO_COORDINATE:
+      region = args.getMap(0);
+      duration = args.getInt(1);
+
+      lng = region.getDouble("longitude");
+      lat = region.getDouble("latitude");
+      view.animateToCoodinate(new LatLng(lat, lng), duration);
+      break;
     }
   }
 
