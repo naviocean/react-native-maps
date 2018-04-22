@@ -157,7 +157,8 @@ public class AirMapMarkerManager extends ViewGroupManager<AirMapMarker> {
     return MapBuilder.of(
       "showCallout", SHOW_INFO_WINDOW,
       "hideCallout", HIDE_INFO_WINDOW,
-      "animateMarkerToCoordinate",  ANIMATE_MARKER_TO_COORDINATE);
+      "animateMarkerToCoordinate",  ANIMATE_MARKER_TO_COORDINATE
+    );
   }
 
   @Override
@@ -166,23 +167,23 @@ public class AirMapMarkerManager extends ViewGroupManager<AirMapMarker> {
     Double lat;
     Double lng;
     ReadableMap region;
-
     switch (commandId) {
-    case SHOW_INFO_WINDOW:
-      ((Marker) view.getFeature()).showInfoWindow();
-      break;
+      case SHOW_INFO_WINDOW:
+        ((Marker) view.getFeature()).showInfoWindow();
+        break;
 
-    case HIDE_INFO_WINDOW:
-      ((Marker) view.getFeature()).hideInfoWindow();
-      break;
-    case ANIMATE_MARKER_TO_COORDINATE:
-      region = args.getMap(0);
-      duration = args.getInt(1);
+      case HIDE_INFO_WINDOW:
+        ((Marker) view.getFeature()).hideInfoWindow();
+        break;
+      
+      case ANIMATE_MARKER_TO_COORDINATE:
+        region = args.getMap(0);
+        duration = args.getInt(1);
 
-      lng = region.getDouble("longitude");
-      lat = region.getDouble("latitude");
-      view.animateToCoodinate(new LatLng(lat, lng), duration);
-      break;
+        lng = region.getDouble("longitude");
+        lat = region.getDouble("latitude");
+        view.animateToCoodinate(new LatLng(lat, lng), duration);
+        break;
     }
   }
 
